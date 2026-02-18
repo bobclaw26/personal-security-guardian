@@ -108,16 +108,20 @@ def get_running_processes():
         )
         
         processes = {}
-        for line in result.stdout.split("\n"):
-            if not line.strip():
+        for idx, line in enumerate(result.stdout.split("\n")):
+            if not line.strip() or idx == 0:  # Skip header
                 continue
             parts = line.split(None, 10)  # Split into ~11 fields
             if len(parts) < 11:
                 continue
             
-            user, pid, cmd = parts[0], parts[1], parts[10]
-            key = f"{user}:{cmd.split()[0]}"  # e.g., "bob:python"
-            processes[key] = int(pid)
+            try:
+                user, pid, cmd = parts[0], parts[1], parts[10]
+                pid = int(pid)  # Validate it's an integer
+                key = f"{user}:{cmd.split()[0]}"  # e.g., "bob:python"
+                processes[key] = pid
+            except (ValueError, IndexError):
+                continue
         
         return sorted(processes.keys())
     except Exception as e:
